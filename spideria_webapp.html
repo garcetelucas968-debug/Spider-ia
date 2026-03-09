@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#c0001a">
+<title>Spider-IA 🕷️</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #c0001a;
+    --red-dark: #8b0000;
+    --red-bright: #ff1a2e;
+    --blue: #0a1a6e;
+    --blue-mid: #1a2fa0;
+    --white: #fff;
+    --offwhite: #f7f3ef;
+    --bubble-bot: #1a2fa0;
+    --bubble-user: #c0001a;
+    --text-light: #f0f0f0;
+    --text-dark: #1a1a2e;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--blue);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  /* ── WEB BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(192,0,26,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(192,0,26,0.2) 0%, transparent 60%),
+      linear-gradient(160deg, #0a1a6e 0%, #0d0d2b 100%);
+    z-index: 0;
+  }
+
+  /* Telaraña SVG de fondo */
+  .web-bg {
+    position: fixed;
+    top: -10px;
+    right: -10px;
+    width: 220px;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(135deg, var(--red-dark) 0%, var(--red) 60%, #e8001f 100%);
+    padding: 14px 18px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 3px 20px rgba(192,0,26,0.5);
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+  }
+
+  .spider-icon {
+    font-size: 36px;
+    line-height: 1;
+    animation: pulse 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .header-text h1 {
+    font-family: 'Bangers', cursive;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--white);
+    line-height: 1;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  }
+
+  .header-text p {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .web-line {
+    position: absolute;
+    bottom: -1px;
+    left: 0; right: 0;
+    height: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 18px,
+      rgba(255,255,255,0.15) 18px, rgba(255,255,255,0.15) 20px
+    );
+  }
+
+  /* ── CHAT AREA ── */
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 5;
+    scroll-behavior: smooth;
+    min-height: 0;
+  }
+
+  #chat::-webkit-scrollbar { width: 4px; }
+  #chat::-webkit-scrollbar-track { background: transparent; }
+  #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+  /* ── BURBUJAS ── */
+  .msg {
+    display: flex;
+    gap: 8px;
+    animation: fadeUp 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.bot { align-self: flex-start; max-width: 88%; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; max-width: 88%; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.bot .avatar {
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    box-shadow: 0 2px 8px rgba(192,0,26,0.5);
+  }
+
+  .msg.user .avatar {
+    background: linear-gradient(135deg, #ffffff33, #ffffff11);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 16px;
+  }
+
+  .bubble {
+    padding: 11px 15px;
+    border-radius: 18px;
+    line-height: 1.55;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-shadow: var(--shadow);
+  }
+
+  .msg.bot .bubble {
+    background: linear-gradient(135deg, var(--blue-mid) 0%, #1e3a8a 100%);
+    color: var(--text-light);
+    border-top-left-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .msg.user .bubble {
+    background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    color: var(--white);
+    border-top-right-radius: 4px;
+  }
+
+  /* Typing indicator */
+  .typing-dots {
+    display: flex;
+    gap: 5px;
+    padding: 14px 18px;
+    align-items: center;
+  }
+
+  .typing-dots span {
+    width: 7px; height: 7px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ── QUICK BUTTONS ── */
+  .quick-wrap {
+    position: relative;
+    z-index: 5;
+    padding: 6px 12px 4px;
+    overflow-x: auto;
+    display: flex;
+    gap: 7px;
+    scrollbar-width: none;
+  }
+  .quick-wrap::-webkit-scrollbar { display: none; }
+
+  .quick-btn {
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 6px 13px;
+    font-size: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .quick-btn:hover, .quick-btn:active {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* ── INPUT AREA ── */
+  .input-area {
+    position: relative;
+    z-index: 10;
+    background: rgba(10, 26, 110, 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 12px env(safe-area-inset-bottom, 14px);
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  #userInput {
+    flex: 1;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 24px;
+    padding: 11px 16px;
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    outline: none;
+    resize: none;
+    min-height: 44px;
+    max-height: 100px;
+    transition: border 0.2s, background 0.2s;
+    line-height: 1.4;
+  }
+
+  #userInput::placeholder { color: rgba(255,255,255,0.4); }
+  #userInput:focus {
+    border-color: var(--red-bright);
+    background: rgba(255,255,255,0.13);
+  }
+
+  #sendBtn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--red-bright), var(--red-dark));
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 12px rgba(192,0,26,0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  #sendBtn:active { transform: scale(0.92); }
+  #sendBtn:hover  { box-shadow: 0 5px 18px rgba(192,0,26,0.7); }
+</style>
+</head>
+<body>
+
+<!-- Telaraña decorativa -->
+<svg class="web-bg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="white" stroke-width="1">
+    <line x1="100" y1="0"   x2="100" y2="200"/>
+    <line x1="0"   y1="100" x2="200" y2="100"/>
+    <line x1="15"  y1="15"  x2="185" y2="185"/>
+    <line x1="185" y1="15"  x2="15"  y2="185"/>
+    <circle cx="100" cy="100" r="30"/>
+    <circle cx="100" cy="100" r="60"/>
+    <circle cx="100" cy="100" r="90"/>
+    <circle cx="100" cy="100" r="120"/>
+  </g>
+</svg>
+
+<!-- Header -->
+<header>
+  <div class="spider-icon">🕷️</div>
+  <div class="header-text">
+    <h1>SPIDER-IA</h1>
+    <p>Tu experto en el Hombre Araña</p>
+  </div>
+  <div class="web-line"></div>
+</header>
+
+<!-- Chat -->
+<div id="chat"></div>
+
+<!-- Quick topics -->
+<div class="quick-wrap" id="quickWrap">
+  <button class="quick-btn" onclick="quickAsk('¿Cuál es el origen de Spider-Man?')">🕷️ Origen</button>
+  <button class="quick-btn" onclick="quickAsk('¿Cuáles son los villanos de Spider-Man?')">🦹 Villanos</button>
+  <button class="quick-btn" onclick="quickAsk('¿Cuáles son las películas de Spider-Man?')">🎬 Películas</button>
+  <button class="quick-btn" onclick="quickAsk('¿Cuáles son los poderes de Spider-Man?')">⚡ Poderes</button>
+  <button class="quick-btn" onclick="quickAsk('Cuéntame sobre Venom')">⬛ Venom</button>
+  <button class="quick-btn" onclick="quickAsk('¿Quiénes son los dibujantes de Spider-Man?')">🎨 Dibujantes</button>
+  <button class="quick-btn" onclick="quickAsk('¿Qué es el Spider-Verse?')">🌌 Spider-Verse</button>
+  <button class="quick-btn" onclick="quickAsk('¿Cuál es la frase de Spider-Man?')">💬 Frase icónica</button>
+</div>
+
+<!-- Input -->
+<div class="input-area">
+  <textarea id="userInput" placeholder="Pregunta sobre Spider-Man..." rows="1"></textarea>
+  <button id="sendBtn" onclick="enviar()">➤</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  BASE DE CONOCIMIENTO
+// ─────────────────────────────────────────────
+const CONOCIMIENTO = {
+  origen: {
+    kw: ["creo","creó","origen","nació","creador","fundador","inventó","primera vez","empezó","cuando fue creado","cuando nació"],
+    r: `🕷️ Spider-Man fue creado por Stan Lee y Steve Ditko.
+Apareció por primera vez en "Amazing Fantasy #15" en agosto de 1962 (Marvel Comics).
+Stan Lee quería un superhéroe adolescente con el que los jóvenes se identificaran.
+Steve Ditko diseñó el icónico traje rojo y azul con la telaraña.`
+  },
+  identidad: {
+    kw: ["peter parker","quién es","quien es","identidad","nombre real","alter ego"],
+    r: `🕷️ Spider-Man es Peter Benjamin Parker.
+Nació en Queens, Nueva York. Huérfano criado por su tío Ben y tía May.
+Era estudiante brillante en la escuela secundaria Midtown.
+Obtuvo sus poderes al ser picado por una araña radiactiva en un laboratorio.`
+  },
+  poderes: {
+    kw: ["poderes","habilidades","puede hacer","fuerza","sentido","telaraña","trepar","capacidades"],
+    r: `⚡ Los poderes de Spider-Man:
+• Fuerza sobrehumana (puede levantar hasta 10 toneladas)
+• Agilidad y reflejos extremos
+• Sentido arácnido (lo alerta del peligro)
+• Capacidad de trepar y adherirse a superficies
+• Lanzadores de telaraña (inventados por él)
+• Inteligencia científica excepcional`
+  },
+  villanos: {
+    kw: ["villano","villanos","enemigo","enemigos","antagonista","malo","malos","rivales"],
+    r: `🦹 Principales villanos de Spider-Man:
+🎃 Duende Verde (Norman Osborn) – su archienemigo
+⬛ Venom (Eddie Brock) – simbionte alienígena
+🦀 Doctor Octopus – 4 tentáculos mecánicos
+🦎 El Lagarto (Dr. Curt Connors)
+🌀 Mysterio – maestro de las ilusiones
+⚡ Electro (Maxwell Dillon)
+🕷️ Carnage (Cletus Kasady)
+🐦 Buitre (Adrian Toomes)`
+  },
+  duende: {
+    kw: ["duende verde","goblin","norman osborn","harry osborn"],
+    r: `🎃 El Duende Verde es el archienemigo #1 de Spider-Man.
+Norman Osborn, padre de Harry y amigo de Peter, se volvió villano con una fórmula de Goblin.
+Mató a Gwen Stacy (novia de Peter) en el puente George Washington.
+Ese momento (ASM #121, 1973) es uno de los más impactantes del cómic.`
+  },
+  venom: {
+    kw: ["venom","eddie brock","simbionte","carnage","negro"],
+    r: `⬛ Venom es uno de los villanos más populares.
+Es un simbionte alienígena que primero se unió a Peter Parker
+y después a Eddie Brock, su enemigo periodístico.
+Primera aparición: The Amazing Spider-Man #300 (1988).
+Carnage es el hijo de Venom, formado con Cletus Kasady, aún más peligroso.`
+  },
+  comics: {
+    kw: ["comic","cómic","comics","historieta","número","serie","amazing","arco"],
+    r: `📚 Cómics esenciales de Spider-Man:
+• Amazing Fantasy #15 (1962) – Primera aparición
+• The Amazing Spider-Man #1 (1963) – Su propia serie
+• ASM #121-122 – La muerte de Gwen Stacy
+• ASM #300 (1988) – Primera aparición de Venom
+• Spider-Man #1 Todd McFarlane (1990)
+• Civil War (2006) – Peter revela su identidad
+• Superior Spider-Man (2013) – Doc Ock en el cuerpo de Peter
+• Spider-Verse (2014) – Todos los Spider-Man del multiverso`
+  },
+  peliculas: {
+    kw: ["película","pelicula","películas","film","cine","tobey","andrew","tom","maguire","garfield","holland","homecoming","no way home"],
+    r: `🎬 Películas de Spider-Man:
+
+📽️ Tobey Maguire (Sam Raimi):
+• Spider-Man (2002)
+• Spider-Man 2 (2004) ← considerada la mejor
+• Spider-Man 3 (2007)
+
+📽️ Andrew Garfield:
+• The Amazing Spider-Man (2012)
+• The Amazing Spider-Man 2 (2014)
+
+📽️ Tom Holland (MCU):
+• Homecoming (2017)
+• Far From Home (2019)
+• No Way Home (2021) ← reunió los 3 actores
+
+🎨 Animación:
+• Into the Spider-Verse (2018) 🏆 Oscar
+• Across the Spider-Verse (2023)`
+  },
+  dibujantes: {
+    kw: ["dibujante","dibujantes","artista","ilustrador","dibujo","arte","mcfarlane","ditko","romita"],
+    r: `🎨 Grandes dibujantes de Spider-Man:
+✏️ Steve Ditko – El creador original (1962-1966)
+✏️ John Romita Sr. – Definió el estilo clásico
+✏️ Gil Kane – Dibujó la muerte de Gwen Stacy
+✏️ Todd McFarlane – Telarañas detalladas, revolucionó el estilo
+✏️ Mark Bagley – Ultimate Spider-Man
+✏️ John Romita Jr.
+✏️ Humberto Ramos – Estilo dinámico y expresivo`
+  },
+  creadores: {
+    kw: ["stan lee","steve ditko","creadores","escritor","guionista"],
+    r: `✍️ Los creadores de Spider-Man:
+
+🌟 Stan Lee (1922-2018):
+Escritor y editor jefe de Marvel Comics.
+También creó Iron Man, X-Men, Thor, Hulk y muchos más.
+Famoso por sus cameos en las películas Marvel.
+
+🌟 Steve Ditko (1927-2018):
+Dibujante y co-creador del personaje.
+Diseñó el traje, los lanzadores y al Duende Verde.
+También creó al Doctor Strange.`
+  },
+  traje: {
+    kw: ["traje","trajes","disfraz","uniforme","iron spider","ropa"],
+    r: `👕 Trajes más famosos de Spider-Man:
+🔴🔵 Clásico rojo y azul – el original de Ditko
+⬛ Traje negro/simbionte – Secret Wars (1984)
+🤖 Iron Spider – creado por Tony Stark en Civil War
+🕷️ Scarlet Spider – Ben Reilly, el clon de Peter
+🦾 Spider-Armor – versión blindada
+🌌 Superior Spider-Man`
+  },
+  aliados: {
+    kw: ["aliado","aliados","amigo","amigos","mary jane","gwen","tía may","tio ben","tío ben","ned","miles"],
+    r: `👥 Personajes importantes:
+❤️ Mary Jane Watson – su gran amor y esposa en cómics
+💛 Gwen Stacy – su primer amor (murió en ASM #121)
+👴 Tío Ben Parker – su figura paterna, su muerte lo hizo héroe
+👵 Tía May Parker – su tutora de siempre
+🤝 Ned Leeds – mejor amigo en el MCU
+🕷️ Miles Morales – Spider-Man del universo alternativo`
+  },
+  spiderverse: {
+    kw: ["spider-verse","spiderverse","multiverso","miles morales","spider-gwen","miguel","2099","gwen stacy"],
+    r: `🌌 El Spider-Verse (Multiverso Araña):
+🕷️ Miles Morales – Earth-1610, Spider-Man afrolatino
+🕸️ Spider-Gwen (Ghost Spider) – Earth-65, Gwen con poderes
+🤖 Spider-Man 2099 (Miguel O'Hara) – el futuro
+🐷 Spider-Ham (Peter Porker) – universo animado
+📰 Spider-Man Noir – universo de los años 30
+🎌 Peni Parker – universo anime japonés
+👴 Peter B. Parker – el Peter cansado y divorciado`
+  },
+  frase: {
+    kw: ["frase","frases","un gran poder","responsabilidad","lema","dicho"],
+    r: `💬 La frase más famosa de Spider-Man:
+
+"¡Un gran poder conlleva una gran responsabilidad!"
+
+De Amazing Fantasy #15 (1962).
+Es la lección del tío Ben que guía todas las acciones de Peter.
+El principio moral que lo define como superhéroe.`
+  }
+};
+
+const SALUDOS = ["hola","que tal","qué tal","como va","como estas","cómo estás","buenas","hey","hi","buen dia","buenos dias","saludos","que hay","qué hay"];
+const PREGUNTAS = ["como","cómo","quien","quién","cuando","cuándo","qué","que","dónde","donde","cuál","cual","por qué","cuántos"];
+const DESPEDIDAS = ["adios","adiós","bye","chao","hasta luego","nos vemos","salir","exit"];
+
+const SALUDOS_R = [
+  "¡Hola! 🕷️ Soy Spider-IA, tu experto en todo sobre Spider-Man.\n¿Qué quieres saber del Hombre Araña?",
+  "¡Hey! 🕸️ ¿Listo para hablar de Spider-Man?\nPregúntame lo que quieras.",
+  "¡Buenas! Con gran poder viene gran conocimiento arácnido. 🕷️\n¿En qué te ayudo?",
+  "¡Hola, amigo araña! Conozco cada cómic, película y villano de Peter Parker. 🕸️",
+];
+
+function norm(t) {
+  return t.toLowerCase()
+    .replace(/á/g,"a").replace(/é/g,"e").replace(/í/g,"i")
+    .replace(/ó/g,"o").replace(/ú/g,"u").replace(/ü/g,"u").replace(/ñ/g,"n");
+}
+
+function detectSaludo(t) { const n = norm(t); return SALUDOS.some(s => n.includes(s)); }
+function detectPregunta(t) { const n = norm(t); return PREGUNTAS.some(p => n.includes(p)); }
+function detectDespedida(t) { const n = norm(t); return DESPEDIDAS.some(d => n.includes(d)); }
+
+function buscar(t) {
+  const n = norm(t);
+  let mejor = null, score = 0;
+  for (const [tema, datos] of Object.entries(CONOCIMIENTO)) {
+    const s = datos.kw.filter(kw => n.includes(norm(kw))).length;
+    if (s > score) { score = s; mejor = tema; }
+  }
+  return mejor && score > 0 ? CONOCIMIENTO[mejor].r : null;
+}
+
+function responder(input) {
+  input = input.trim();
+  if (!input) return "🕷️ Escribe algo sobre Spider-Man.";
+  if (detectDespedida(input)) return "🕷️ ¡Hasta luego!\n\n\"¡Un gran poder conlleva una gran responsabilidad!\"";
+  if (detectSaludo(input)) return SALUDOS_R[Math.floor(Math.random() * SALUDOS_R.length)];
+  const r = buscar(input);
+  if (r) return (detectPregunta(input) ? "🕸️ ¡Buena pregunta!\n\n" : "") + r;
+  return `🕷️ No tengo esa info exacta.\n\nPuedo hablar sobre:\n• Origen y creadores\n• Poderes y trajes\n• Villanos y aliados\n• Cómics y películas\n• Dibujantes y Spider-Verse\n\n¡Usa los botones de arriba o pregúntame directamente!`;
+}
+
+// ─────────────────────────────────────────────
+//  UI
+// ─────────────────────────────────────────────
+
+function scrollDown() {
+  const chat = document.getElementById('chat');
+  requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 120);
+}
+
+function addMsg(texto, quien) {
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${quien}`;
+
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = quien === 'bot' ? '🕷️' : '🙂';
+
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.textContent = texto;
+
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  chat.appendChild(wrap);
+  scrollDown();
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.id = 'typing';
+
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = '🕷️';
+
+  const bub = document.createElement('div');
+  bub.className = 'bubble typing-dots';
+  bub.innerHTML = '<span></span><span></span><span></span>';
+
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  chat.appendChild(wrap);
+  scrollDown();
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function enviar() {
+  const inp = document.getElementById('userInput');
+  const texto = inp.value.trim();
+  if (!texto) return;
+  addMsg(texto, 'user');
+  inp.value = '';
+  inp.style.height = 'auto';
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    addMsg(responder(texto), 'bot');
+  }, 600);
+}
+
+function quickAsk(texto) {
+  addMsg(texto, 'user');
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    addMsg(responder(texto), 'bot');
+  }, 600);
+}
+
+// Enter para enviar (Shift+Enter = nueva línea)
+document.getElementById('userInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    enviar();
+  }
+});
+
+// Auto-resize textarea
+document.getElementById('userInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// Mensaje de bienvenida
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    addMsg(
+      `¡Hola! 🕷️ Soy Spider-IA.\n\nSoy tu experto en todo sobre Spider-Man:\n• Origen y creadores (1962)\n• Poderes y trajes\n• Villanos y aliados\n• Cómics y películas\n• Dibujantes y Spider-Verse\n\nUsa los botones de arriba o escríbeme directamente. ¡Pregunta lo que quieras!`,
+      'bot'
+    );
+  }, 300);
+});
+</script>
+</body>
+</html>
